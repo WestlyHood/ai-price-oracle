@@ -7,6 +7,7 @@ import httpx
 from web3 import Web3
 from collections import defaultdict, deque
 from sklearn.linear_model import LinearRegression
+from fastapi.middleware.cors import CORSMiddleware
 
 # ----- CONFIG -----
 ORACLE_PRIVKEY = os.getenv("ORACLE_PRIVKEY", "0x4d85b601ba1772e393ada7b8b3ebb9df6a50535454f83002dd52d5c6f801e453")
@@ -28,6 +29,20 @@ with open("AIPriceOracle.json") as f:
 contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=ABI)
 
 app = FastAPI()
+
+
+# Enable CORS for frontend (Vercel + local dev)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",              # local dev
+        "https://oracle-dashboard-ochre.vercel.app/", # your Vercel frontend URL
+        "*"                                   # (optional) allow all origins
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Interval for automation (seconds)
 SUBMIT_INTERVAL = int(os.getenv("SUBMIT_INTERVAL", "30"))
