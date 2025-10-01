@@ -9,6 +9,13 @@ from collections import defaultdict, deque
 from sklearn.linear_model import LinearRegression
 from fastapi.middleware.cors import CORSMiddleware
 
+# ----- CONFIG -----
+ORACLE_PRIVKEY = os.getenv("ORACLE_PRIVKEY")
+acct = Account.from_key(ORACLE_PRIVKEY)
+
+# # RPC (Alchemy Sepolia in this case)
+RPC_URL = os.getenv("RPC_URL")
+w3 = Web3(Web3.HTTPProvider(RPC_URL))
 
 CONTRACT_ADDRESS = Web3.to_checksum_address(
     os.getenv("CONTRACT_ADDRESS", "0xca042238b199cdaddd50824de2143b714324f01f")
