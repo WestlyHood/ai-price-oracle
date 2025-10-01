@@ -1,8 +1,11 @@
 fastapi==0.115.0
-uvicorn[standard]==0.30.6
+uvicorn==0.30.6
+httpx==0.27.0
 web3==6.15.1
 eth-account==0.10.0
 eth-utils==2.3.1
-httpx==0.27.0
 numpy==1.26.4
 scikit-learn==1.5.2
+scipy==1.16.2
+joblib==1.5.2
+threadpoolctl==3.6.0

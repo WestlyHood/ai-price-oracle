@@ -9,18 +9,20 @@ from collections import defaultdict, deque
 from sklearn.linear_model import LinearRegression
 
 # ----- CONFIG -----
-ORACLE_PRIVKEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+ORACLE_PRIVKEY = os.getenv("ORACLE_PRIVKEY")
+if not ORACLE_PRIVKEY:
+    # fallback for local testing (Anvil/Hardhat)
+    ORACLE_PRIVKEY = "0x4d85b601ba1772e393ada7b8b3ebb9df6a50535454f83002dd52d5c6f801e453"
+
 acct = Account.from_key(ORACLE_PRIVKEY)
 
-# Anvil RPC
-# w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545"))
+# RPC from env (Alchemy/Infura/Anvil)
+RPC_URL = os.getenv("RPC_URL", "http://127.0.0.1:8545")
+w3 = Web3(Web3.HTTPProvider(RPC_URL))
 
-#Alchemy URL
-w3 = Web3(Web3.HTTPProvider("https://eth-sepolia.g.alchemy.com/v2/E_fbn9sTrq84n2LaDPJft"))
-
-
-# Replace with your deployed contract address
-CONTRACT_ADDRESS = "0xca042238b199cdaddd50824de2143b714324f01f"
+# Contract address (checksum required)
+CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS", "0xca042238b199cdaddd50824de2143b714324f01f")
+CONTRACT_ADDRESS = Web3.to_checksum_address(CONTRACT_ADDRESS)
 
 # Load ABI from local file (save Remix ABI as AIPriceOracle.json)
 with open("AIPriceOracle.json") as f:
