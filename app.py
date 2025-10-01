@@ -1,4 +1,4 @@
-import os, time, json, numpy as np, asyncio
+import os, time, json, numpy as np, asyncio, binascii
 from fastapi import FastAPI
 from eth_account import Account
 from eth_account.messages import encode_defunct
@@ -9,20 +9,17 @@ from collections import defaultdict, deque
 from sklearn.linear_model import LinearRegression
 
 # ----- CONFIG -----
-ORACLE_PRIVKEY = os.getenv("ORACLE_PRIVKEY")
-if not ORACLE_PRIVKEY:
-    # fallback for local testing (Anvil/Hardhat)
-    ORACLE_PRIVKEY = "0x4d85b601ba1772e393ada7b8b3ebb9df6a50535454f83002dd52d5c6f801e453"
-
+ORACLE_PRIVKEY = os.getenv("ORACLE_PRIVKEY", "0x4d85b601ba1772e393ada7b8b3ebb9df6a50535454f83002dd52d5c6f801e453")
 acct = Account.from_key(ORACLE_PRIVKEY)
 
-# RPC from env (Alchemy/Infura/Anvil)
-RPC_URL = os.getenv("RPC_URL", "http://127.0.0.1:8545")
+# RPC (Alchemy Sepolia in this case)
+RPC_URL = os.getenv("RPC_URL", "https://eth-sepolia.g.alchemy.com/v2/E_fbn9sTrq84n2LaDPJft")
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
 
-# Contract address (checksum required)
-CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS", "0xca042238b199cdaddd50824de2143b714324f01f")
-CONTRACT_ADDRESS = Web3.to_checksum_address(CONTRACT_ADDRESS)
+# Replace with your deployed contract address
+CONTRACT_ADDRESS = Web3.to_checksum_address(
+    os.getenv("CONTRACT_ADDRESS", "0xca042238b199cdaddd50824de2143b714324f01f")
+)
 
 # Load ABI from local file (save Remix ABI as AIPriceOracle.json)
 with open("AIPriceOracle.json") as f:
@@ -76,6 +73,17 @@ PAIRS = [
 ]
 
 
+# ----- SAFE HEX HANDLER -----
+def hex_to_bytes(sig: str) -> bytes:
+    """Convert hex string (0x-prefixed) safely into bytes."""
+    if sig.startswith("0x"):
+        sig = sig[2:]
+    try:
+        return bytes.fromhex(sig)
+    except binascii.Error:
+        raise ValueError(f"Invalid signature format: {sig}")
+
+
 # ----- AGGREGATOR -----
 async def aggregate_price(pair):
     prices = []
@@ -103,7 +111,7 @@ async def aggregate_price(pair):
 # ----- PUSH TO CHAIN -----
 def push_to_chain(base, quote, priceE8, confBP, ts, payload, sig):
     tx = contract.functions.submit(
-        base, quote, priceE8, confBP, ts, payload, bytes.fromhex(sig[2:])
+        base, quote, priceE8, confBP, ts, payload, hex_to_bytes(sig)
     ).build_transaction({
         "from": acct.address,
         "nonce": w3.eth.get_transaction_count(acct.address),
