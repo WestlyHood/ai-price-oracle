@@ -128,38 +128,23 @@ async def aggregate_price(pair):
 last_gas_bump = 0
 
 def push_to_chain(base, quote, priceE8, confBP, ts, payload, sig):
-    global last_gas_bump
-    nonce = w3.eth.get_transaction_count(acct.address)
+    # Always get the latest *pending* nonce
+    nonce = w3.eth.get_transaction_count(acct.address, "pending")
 
-    # Increment bump every tx to avoid "replacement underpriced"
-    last_gas_bump += 1
-    bump_gwei = last_gas_bump
-
-    # Base fee setup (Sepolia = EIP-1559)
-    base_priority_fee = w3.to_wei("2", "gwei")
-    max_priority_fee = base_priority_fee + w3.to_wei(bump_gwei, "gwei")
-    max_fee = max_priority_fee + w3.to_wei("3", "gwei")
-
+    # Use EIP-1559 style fees
     tx = contract.functions.submit(
         base, quote, priceE8, confBP, ts, payload, hex_to_bytes(sig)
     ).build_transaction({
         "from": acct.address,
         "nonce": nonce,
         "gas": 2_000_000,
-        "maxFeePerGas": max_fee,
-        "maxPriorityFeePerGas": max_priority_fee,
+        "maxFeePerGas": w3.to_wei("3", "gwei"),
+        "maxPriorityFeePerGas": w3.to_wei("2", "gwei"),
     })
 
     signed_tx = w3.eth.account.sign_transaction(tx, ORACLE_PRIVKEY)
-
-    # Handle web3.py v5/v6
-    raw_tx = getattr(signed_tx, "rawTransaction", None) or getattr(signed_tx, "raw_transaction", None)
-    tx_hash = w3.eth.send_raw_transaction(raw_tx)
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
     return tx_hash.hex()
-
-
-
-
 
 # ----- ENDPOINT -----
 @app.get("/")
