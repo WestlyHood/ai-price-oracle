@@ -9,15 +9,7 @@ from collections import defaultdict, deque
 from sklearn.linear_model import LinearRegression
 from fastapi.middleware.cors import CORSMiddleware
 
-# ----- CONFIG -----
-ORACLE_PRIVKEY = os.getenv("ORACLE_PRIVKEY", "0x4d85b601ba1772e393ada7b8b3ebb9df6a50535454f83002dd52d5c6f801e453")
-acct = Account.from_key(ORACLE_PRIVKEY)
 
-# RPC (Alchemy Sepolia in this case)
-RPC_URL = os.getenv("RPC_URL", "https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY")
-w3 = Web3(Web3.HTTPProvider(RPC_URL))
-
-# Replace with your deployed contract address
 CONTRACT_ADDRESS = Web3.to_checksum_address(
     os.getenv("CONTRACT_ADDRESS", "0xca042238b199cdaddd50824de2143b714324f01f")
 )
@@ -36,8 +28,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",              # local dev
-        "https://oracle-dashboard-ochre.vercel.app/", # your Vercel frontend URL
-        "*"                                   # (optional) allow all origins
+        "https://oracle-dashboard-ochre.vercel.app/", 
+        "*"                                   
     ],
     allow_credentials=True,
     allow_methods=["*"],
