@@ -13,7 +13,7 @@ ORACLE_PRIVKEY = os.getenv("ORACLE_PRIVKEY", "0x4d85b601ba1772e393ada7b8b3ebb9df
 acct = Account.from_key(ORACLE_PRIVKEY)
 
 # RPC (Alchemy Sepolia in this case)
-RPC_URL = os.getenv("RPC_URL", "https://eth-sepolia.g.alchemy.com/v2/E_fbn9sTrq84n2LaDPJft")
+RPC_URL = os.getenv("RPC_URL", "https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY")
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
 
 # Replace with your deployed contract address
@@ -120,8 +120,13 @@ def push_to_chain(base, quote, priceE8, confBP, ts, payload, sig):
     })
 
     signed_tx = w3.eth.account.sign_transaction(tx, ORACLE_PRIVKEY)
-    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+
+    # FIX: handle both attribute styles
+    raw_tx = getattr(signed_tx, "rawTransaction", None) or getattr(signed_tx, "raw_transaction", None)
+
+    tx_hash = w3.eth.send_raw_transaction(raw_tx)
     return tx_hash.hex()
+
 
 
 # ----- ENDPOINT -----
