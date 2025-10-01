@@ -125,6 +125,11 @@ def push_to_chain(base, quote, priceE8, confBP, ts, payload, sig):
 
 
 # ----- ENDPOINT -----
+@app.get("/")
+def home():
+    return {"status": "ok", "message": "AI Oracle backend running", "endpoint": "/price"}
+
+
 @app.get("/price")
 async def get_price():
     """Return last cached results (auto-submitted)."""
@@ -151,7 +156,10 @@ async def auto_submit_loop():
                 raw_hash = keccak(text=payload)
                 msg = encode_defunct(primitive=raw_hash)
                 signed = Account.sign_message(msg, ORACLE_PRIVKEY)
-                sig = "0x" + signed.signature.hex()
+                sig = signed.signature.hex()
+                if not sig.startswith("0x"):
+                        sig = "0x" + sig
+
 
                 # Push to chain
                 tx_hash = push_to_chain(pair["base"], pair["quote"], to_e8(median), to_bp(conf), ts, payload, sig)
